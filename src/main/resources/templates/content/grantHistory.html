@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko"
+      layout:decorate="~{layout/default_layout}"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+	<link
+			href="/assets/extra-libs/multicheck/multicheck.css"
+			rel="stylesheet"
+			th:href="@{/assets/extra-libs/multicheck/multicheck.css}"
+			type="text/css"
+	/>
+	<link
+			href="/assets/libs/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css"
+			rel="stylesheet"
+			th:href="@{/assets/libs/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css}"
+			type="text/css"
+	/>
+	<link
+			href="/assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.css"
+			rel="stylesheet"
+			th:href="@{/assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.css}"
+	/>
+	<!-- this page js -->
+	<script href="/assets/extra-libs/multicheck/datatable-checkbox-init.js"
+	        th:src="@{/assets/extra-libs/multicheck/datatable-checkbox-init.js}"></script>
+	<script href="/assets/extra-libs/multicheck/jquery.multicheck.js"
+	        th:src="@{/assets/extra-libs/multicheck/jquery.multicheck.js}"></script>
+	<script href="/assets/extra-libs/DataTables/datatables.min.js"
+	        th:src="@{/assets/extra-libs/DataTables/datatables.min.js}"></script>
+	<script href="/assets/libs/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"
+			th:src="@{/assets/libs/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js}"></script>
+
+	<script href="/js/js-common.js" th:src="@{/js/js-common.js}"></script>
+
+	<script href="/js/xlsx.core.min.js" th:src="@{/js/xlsx.core.min.js}"></script>
+	<script href="/js/FileSaver.min.js" th:src="@{/js/FileSaver.min.js}"></script>
+	<script href="/js/tableexport.js" th:src="@{/js/tableexport.js}"></script>
+
+	<script th:inline="javascript">
+		var searchFalg = false;
+		var searchText;
+		var _sdate;
+		var _edate;
+		var rowcount = 0;
+        $(function () {
+
+			var $sdate = $("#datepicker-autoclose1").datepicker({
+				format:'yyyy-mm-dd',
+				language: 'kr',
+				autoclose: true,
+				todayHighlight: true,
+			});
+
+			$sdate.datepicker('setDate','-1M');
+			_sdate = $("#datepicker-autoclose1").val();
+
+			var $edate = $("#datepicker-autoclose2").datepicker({
+				format:'yyyy-mm-dd',
+				language: 'kr',
+				autoclose: true,
+				todayHighlight: true,
+			});
+
+			$edate.datepicker('setDate',new Date());
+			_edate = $("#datepicker-autoclose2").val();
+
+            var dataTable1=$("#zero_config").DataTable({
+                ajax : {
+                    url: "/historyListAjax",
+                    type: "POST",
+                    dataType : 'JSON',
+                    cache : false,
+					headers:{
+						'AJAX':true
+					},
+                    beforeSend : function() {
+                    },
+                    data: function (p) {
+						p.jobFlag = "G";
+
+						$("#searchText").val(searchText);
+						if(_sdate != '') $("#datepicker-autoclose1").val(_sdate);
+						if(_edate != '') $("#datepicker-autoclose2").val(_edate);
+
+						p.searchStartDate = $("#datepicker-autoclose1").val();
+						p.searchEndDate = $("#datepicker-autoclose2").val();
+						p.searchText = $("#searchText").val();
+
+                        p.page = $("#zero_config").DataTable().page.info().page+1;
+                        p.size = $("#zero_config").DataTable().page.len();
+                    },
+                    dataSrc: function(res) {
+                        var data = res.data;
+                        return data;
+                    },
+                    dataFilter: function (data) {
+                         data = JSON.parse(data);
+
+                         var json = {
+                            recordsTotal: data.totalElements,
+                            recordsFiltered: data.totalElements,
+                            data: data.content
+                         };
+
+						rowcount = data.totalElements;
+
+                         return JSON.stringify(json);
+                    },
+                    complete : function(res) {
+
+						if(rowcount > 0){
+							$(".excelBtn").attr('disabled', false);
+						}else{
+							$(".excelBtn").attr('disabled', true);
+						}
+                    },
+                    error : function (jqXHR, textStatus, errorThrown) {
+						console.log(jqXHR.status);
+						if (jqXHR.status == 401) {
+							alert("인증에 실패 했습니다. 로그인 페이지로 이동합니다.");
+							location.href = "/logout";
+						} else if (jqXHR.status == 403) {
+							alert("세션이 만료가 되었습니다. 로그인 페이지로 이동합니다.");
+							location.href = "/login";
+						} else {
+
+							location.href = "/error/error_500.html";
+						}
+                    }
+                },
+                  columnDefs: [
+                    // {
+                    //   data: function (data, type) {
+                    //       return '<label class="customcheckbox"><input type="checkbox" name="checkedbox"  value="'+data.id+'" class="listCheckbox"><span class="checkmark"></span></label>';
+                    //   },
+                    //   targets: 0,
+                    //   orderable: false,
+                    //   visible: true
+                    // },
+                    {data: 'id',    targets: 0, orderable: false, visible: true},
+					{data: 'jobContent',    targets: 1, orderable: false, visible: true},
+					{data: function(data, type){
+							var date = new Date(data.requestDate);
+							return toStringByFormattingHm(date,'-');
+						},    targets: 2, orderable: false, visible: true}
+
+
+                  ],
+                  ordering: false,
+                  pagingType: "full_numbers",
+                  searching: true,
+                  lengthChange: false,
+                  info: false,
+                  processing: true,
+                  serverSide: true,
+                  pageLength: 10,
+                  paging: true,
+				  bStateSave: true
+				,language:{
+					infoEmpty:"조회된 데이터가 없습니다.",
+					emptyTable:"조회된 데이터가 없습니다.",
+					zeroRecords:"조회된 데이터가 없습니다."
+				}
+            });
+
+            $(".dataTables_filter").html('<button class="btn btn-success text-white excelBtn" id="refresh" onclick="exceldown();">엑셀 다운로드</button>');
+			$("#zero_config_paginate").parent("div").addClass("page-wrap");
+			$("#zero_config_paginate").parent("div").siblings("div").addClass("before-page-wrap");
+
+			search = function(){
+				var sdate = new Date($("#datepicker-autoclose1").val());
+				var edate = new Date($("#datepicker-autoclose2").val());
+
+				if(sdate>edate){
+					alert("시작일자, 종료일자를 확인해주세요.");
+					return false;
+				}
+
+				_sdate = $("#datepicker-autoclose1").val();
+				_edate = $("#datepicker-autoclose2").val();
+				searchText=$("#searchText").val();
+				searchFalg = true;
+				dataTable1Clear();
+				dataTable1.draw();
+				searchFalg = false;
+			}
+
+			reset1 = function(){
+				$("#searchText").val('');
+				$sdate.datepicker('setDate','-1M');
+				$edate.datepicker('setDate',new Date());
+			}
+
+			exceldown = function(){
+				$(".dim2").show();
+				setTimeout(() => exportExcel(), 500);
+			}
+
+			$("#searchText").keypress(function(e) {
+				if (e.keyCode === 13) {
+					search();
+					e.preventDefault();
+				}
+			});
+
+			dataTable1Clear = function(){
+				dataTable1.state.clear();
+			}
+        });
+
+		function s2ab(s) {
+			var buf = new ArrayBuffer(s.length); //convert s to arrayBuffer
+			var view = new Uint8Array(buf);  //create uint8array as viewer
+			for (var i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF; //convert to octet
+			return buf;
+		}
+		function exportExcel(){
+			// step 1. workbook 생성
+			var wb = XLSX.utils.book_new();
+
+			// step 2. 시트 만들기
+			var newWorksheet = excelHandler.getWorksheet();
+
+			// step 3. workbook에 새로만든 워크시트에 이름을 주고 붙인다.
+			XLSX.utils.book_append_sheet(wb, newWorksheet, excelHandler.getSheetName());
+
+			// step 4. 엑셀 파일 만들기
+			var wbout = XLSX.write(wb, {bookType:'xlsx',  type: 'binary'});
+
+			// step 5. 엑셀 파일 내보내기
+			saveAs(new Blob([s2ab(wbout)],{type:"application/octet-stream"}), excelHandler.getExcelFileName());
+		}
+
+		var excelHandler = {
+			getExcelFileName : function(){
+				return 'biotech_권한부여로그_'+/*[[${#calendars.format(#calendars.createNow(),'yyyyMMdd')+'.xlsx'}]]*/;
+			},
+			getSheetName : function(){
+				return '권한부여로그';
+			},
+			getExcelData : function(){
+
+				var obj = {
+					'jobFlag':"G"
+					,'searchText':$("#searchText").val()
+					,'searchStartDate':$("#datepicker-autoclose1").val()
+					,'searchEndDate':$("#datepicker-autoclose2").val()
+				}
+
+				var objlist = [];
+				$.ajax({
+					dataType : 'json'
+					, type : 'POST'
+					, async : false
+					, beforeSend : function (jqXHR, settings) {
+
+					}
+					, url : '/historyListExcel'
+					, data : obj
+					, success : function (changes) {
+						//debugger;
+						var i = 0;
+						for(i=0; i<changes.length; i++){
+							var robj = changes[i];
+							objlist.push({
+								'번호':robj.id
+								,'작업내용':robj.jobContent
+								,'작업일시':toStringByFormattingHm(new Date(robj.requestDate),'-')
+							});
+						}
+
+					}
+					, complete : function (changes) {
+						$(".dim2").hide();
+					}
+				});
+				return objlist;
+			},
+			getWorksheet : function(){
+				//return XLSX.utils.table_to_sheet(this.getExcelData());
+				return XLSX.utils.json_to_sheet(this.getExcelData());
+			}
+		}
+
+	</script>
+</head>
+
+
+<div class="page-wrapper" layout:fragment="content">
+	<div class="page-breadcrumb">
+		<div class="row">
+			<div class="col-12 d-flex no-block align-items-center">
+				<h4 class="page-title">권한부여 로그 관리</h4>
+			</div>
+		</div>
+	</div>
+
+	<div class="container-fluid">
+		<div class="card">
+			<form class="form-horizontal" id="is_form" method="post"name="is_form" onsubmit="return false;">
+			<div class="card-body">
+<!--				<h5 class="card-title">문의하기 목록</h5>-->
+
+				<div class="table-responsive">
+					<div class="dataTables_wrapper container-fluid dt-bootstrap4 no-footer">
+						<div class="row">
+							<div class="col-sm-12">
+								<table class="table table-bordered">
+									<tr>
+										<td style="vertical-align:middle"><label style="margin:0;">검색</label></td>
+										<td><input type="text" name="searchText" id="searchText" class="form-control col-md-6" placeholder="내용"></td>
+									</tr>
+									<tr>
+										<td style="vertical-align:middle"><label style="margin:0;">조회 날짜</label></td>
+										<td>
+											<div class="input-group">
+												<input class="form-control col-md-3" id="datepicker-autoclose1" name="searchStartDate"
+													   placeholder="yyyy-mm-dd"
+													   type="text"
+													   th:value="${#calendars.format(#calendars.createNow(),'yyyy-MM-dd')}"
+													   readOnly="true">
+
+
+
+												<span style="display:inline-block;padding:0 7px;line-height:36px;">-</span>
+
+												<input class="form-control col-md-3" id="datepicker-autoclose2" name="searchEndDate"
+													   placeholder="yyyy-mm-dd"
+													   type="text"
+													   th:value="${#calendars.format(#calendars.createNow(),'yyyy-MM-dd')}"
+													   readOnly="true">
+
+
+											</div>
+										</td>
+									</tr>
+									<tr>
+										<td colspan="2" style="text-align: center;">
+											<button class="btn btn-success text-white" onclick="search();" type="button">
+												검색
+											</button>
+											<button class="btn btn-secondary text-white" onclick="reset1();"  type="button">
+												초기화
+											</button>
+										</td>
+									</tr>
+								</table>
+							</div>
+						</div>
+					</div>
+
+
+
+					<table
+							class="table table-striped table-bordered"
+							id="zero_config"
+					>
+						<thead>
+						<tr>
+<!--							<th>-->
+<!--								<label class="customcheckbox mb-3">-->
+<!--									<input id="mainCheckbox" type="checkbox">-->
+<!--									<span class="checkmark"></span>-->
+<!--								</label>-->
+<!--							</th>-->
+							<th>번호</th>
+							<th>작업내용</th>
+							<th>작업일시</th>
+						</tr>
+						</thead>
+						<tbody>
+						</tbody>
+						<tfoot>
+						</tfoot>
+					</table>
+				</div>
+			</div>
+			</form>
+		</div>
+	</div>
+
+
+</div>
+
+</html>

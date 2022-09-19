@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ko"
+	  layout:decorate="~{layout/default_layout}"
+	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	  xmlns:th="http://www.thymeleaf.org">
+<head>
+	<!-- Custom CSS -->
+	<link
+			href="/assets/libs/jquery-minicolors/jquery.minicolors.css"
+			rel="stylesheet"
+			th:href="@{/assets/libs/jquery-minicolors/jquery.minicolors.css}"
+			type="text/css"
+	/>
+	<link
+			href="/assets/libs/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css"
+			rel="stylesheet"
+			th:href="@{/assets/libs/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css}"
+			type="text/css"
+	/>
+	<link
+			href="/assets/libs/quill/dist/quill.snow.css"
+			rel="stylesheet"
+			th:href="@{/assets/libs/quill/dist/quill.snow.css}"
+			type="text/css"
+	/>
+	<!-- This Page JS -->
+	<script href="/assets/libs/inputmask/dist/min/jquery.inputmask.bundle.min.js"
+			th:src="@{/assets/libs/inputmask/dist/min/jquery.inputmask.bundle.min.js}"></script>
+	<script href="/dist/js/pages/mask/mask.init.js" th:src="@{/dist/js/pages/mask/mask.init.js}"></script>
+	<script href="/assets/libs/jquery-asColor/dist/jquery-asColor.min.js"
+			th:src="@{/assets/libs/jquery-asColor/dist/jquery-asColor.min.js}"></script>
+	<script href="/assets/libs/jquery-asGradient/dist/jquery-asGradient.js"
+			th:src="@{/assets/libs/jquery-asGradient/dist/jquery-asGradient.js}"></script>
+	<script href="/assets/libs/jquery-asColorPicker/dist/jquery-asColorPicker.min.js"
+			th:src="@{/assets/libs/jquery-asColorPicker/dist/jquery-asColorPicker.min.js}"></script>
+	<script href="/assets/libs/jquery-minicolors/jquery.minicolors.min.js"
+			th:src="@{/assets/libs/jquery-minicolors/jquery.minicolors.min.js}"></script>
+	<script href="/assets/libs/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"
+			th:src="@{/assets/libs/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js}"></script>
+	<script href="/assets/libs/quill/dist/quill.min.js" th:src="@{/assets/libs/quill/dist/quill.min.js}"></script>
+
+	<script href="/assets/libs/jquery-validation/dist/jquery.validate.min.js"
+			th:src="@{/assets/libs/jquery-validation/dist/jquery.validate.min.js}"></script>
+	<script href="/assets/libs/jquery-validation/dist/additional-methods.js"
+			th:src="@{/assets/libs/jquery-validation/dist/additional-methods.js}"></script>
+
+	<script href="/js/jquery-common.js" th:src="@{/js/jquery-common.js}"></script>
+	<script href="/dext5editor/js/dext5editor.js"
+			th:src="@{/dext5editor/js/dext5editor.js}"></script>
+	<style>
+		.form-group.required .control-label:after { content:"*";color:red; }
+	</style>
+	<script th:inline="javascript">
+		$(function () {
+
+
+			var $sdate = $("#datepicker-autoclose1").datepicker({
+				format:'yyyy-mm-dd',
+				language: 'kr',
+				autoclose: true,
+				todayHighlight: true,
+			});
+
+			var $edate = $("#datepicker-autoclose2").datepicker({
+				format:'yyyy-mm-dd',
+				language: 'kr',
+				autoclose: true,
+				todayHighlight: true,
+			});
+
+
+			$("#input_file").on("change", fileCheck);
+
+			//좌측 메뉴 활성화
+			$(".sidebar-link").each(function(){
+				if($(this).attr("href").indexOf("mainpopList") > 0){
+					$(this).addClass("active");
+					$(this).closest('li').addClass("active");
+					$(this).closest('li').closest('ul').addClass("in");
+					$(this).closest('li').closest('ul').prev().addClass("active");
+					$(this).closest('li').closest('ul').closest('li').addClass('selected');
+					return false;
+				}
+			});
+
+			$('#title').keyup(function (e){
+				var content = $(this).val();
+				$('#counter').html("("+content.length+" / 최대 100자)");    //글자수 실시간 카운팅
+				if (content.length > 100){
+					// alert("최대 100자까지 입력 가능합니다.");
+					// $(this).val(content.substring(0, 100));
+					$('#counter').html("(100 / 최대 100자)");
+				}
+			});
+
+			$('#counter').html("("+$("#title").val().length+" / 최대 100자)");    //글자수 실시간 카운팅
+
+			$("#is_form").validate({
+				ignore: "",
+				rules: {
+					dispYn: {required:true},
+					langKoYn: {required:true},
+					title: {required:function(elements){
+							var val = elements.value;
+							val = val.replace(/^\s+|\s+$/g, '');
+							elements.value = val;
+							if(val.length == 0){
+								$('#counter').html("("+$("#title").val().length+" / 최대 100자)");    //글자수 실시간 카운팅
+								return true;
+							}else{
+								$('#counter').html("("+$("#title").val().length+" / 최대 100자)");    //글자수 실시간 카운팅
+								return false;
+							}
+						}},
+					popImgCheck: {
+						required: function(element){
+							return element.value == '';
+						}
+						,extension2: 'png|jpg'
+						,filesize : 2097152
+					},
+					popImgLink:{
+						regex:/^http[s]?\:\/\//i
+					},
+					widthPoint: {num:true},
+					heightPoint: {num:true},
+					dispStartDay: {required:true, regex2:/^(\d{1,4}-\d{2}-\d{2})$/g, /*[# th:if="${mainpop.id == null}"]*/nowdatecheck:true/*[/]*/},
+					dispStartTime: {required:true},
+					dispEndDay: {required:true, regex2:/^(\d{1,4}-\d{2}-\d{2})$/g, /*[# th:if="${mainpop.id == null}"]*/nowdatecheck:true/*[/]*/},
+					dispEndTime: {required:true}
+				},
+
+
+				messages: {
+					dispYn: {required:"전시여부를 선택해주세요."},
+					langKoYn: {required:"언어구분을 선택해주세요."},
+					title: {required:"제목을 입력해주세요."},
+					popImgCheck: {required: "팝업이미지를 선택해주세요.",extension2: "팝업이미지는 png, jpg만 업로드 가능합니다.",filesize: "팝업이미지는 2MB이하만 업로드 가능합니다."},
+					popImgLink:{
+						regex:"http:// 또는 https://를 포함하여 주세요."
+					},
+					widthPoint: {num:"숫자만 입력가능합니다."},
+					heightPoint: {num:"숫자만 입력가능합니다."},
+					dispStartDay: {required:"전시시작일을 입력해주세요.", regex2:"전시시작일을 확인해주세요.", /*[# th:if="${mainpop.id == null}"]*/nowdatecheck:"전시시작일은 현재일보다 이전일 수 없습니다."/*[/]*/},
+					dispStartTime: {required:"전시시작시간을 입력해주세요."},
+					dispEndDay: {required:"전시종료일을 입력해주세요.", regex2:"전시종료일을 확인해주세요.", /*[# th:if="${mainpop.id == null}"]*/nowdatecheck:"전시종료일은 현재일보다 이전일 수 없습니다."/*[/]*/},
+					dispEndTime: {required:"전시종료시간을 입력해주세요."}
+				},
+				errorPlacement: function(error, element) {
+
+				}
+			});
+		});
+
+
+
+
+		// 파일 현재 필드 숫자 totalCount랑 비교값
+		var fileCount = $('#articlefileChange').children().length;
+		// 해당 숫자를 수정하여 전체 업로드 갯수를 정한다.
+		var totalCount = 1;
+		// 파일 고유넘버
+		var fileNum = 0;
+		// 첨부파일 배열
+		var content_files = [];
+		var delete_files = [];
+
+		function fileCheck(e) {
+			var files = e.target.files;
+
+			// 파일 배열 담기
+			var filesArr = Array.prototype.slice.call(files);
+
+			fileCount = $('#articlefileChange').children().length;
+			// 파일 개수 확인 및 제한
+			if (fileCount + filesArr.length > totalCount) {
+				alert('파일은 최대 '+totalCount+'개까지 업로드 할 수 있습니다.');
+				return;
+			} else {
+				fileCount = fileCount + filesArr.length;
+			}
+
+			// 각각의 파일 배열담기 및 기타
+			filesArr.forEach(function (f) {
+				var name = f.name;
+				var ext = f.name.split('.').pop().toLowerCase();
+				var size = f.size;
+				var reader = new FileReader();
+
+				if(size > 2097152){
+					alert("2MB이하의 jpg, png 파일만 업로드 할 수 있습니다.");
+					$("#input_file").val("");
+					return false;
+				}
+
+				if("jpg|png".indexOf(ext) == -1){
+					alert("jpg, png 파일만 업로드 할 수 있습니다.");
+					$("#input_file").val("");
+					return false;
+				}
+
+				reader.onload = function (e) {
+					content_files = [];
+					content_files.push(f);
+					$("#popImgCheck").val(name);
+					$("#popImgCheck").attr('data-ext',ext);
+					$("#popImgCheck").attr('data-size',size);
+					$('#articlefileChange').append(
+							'<div id="file' + fileNum + '" width="100" hight="100" >'
+							+ '<img src="' + e.target.result + '" alt="">'
+							+ '<i class="me-2 mdi mdi-minus" onclick="fileDelete(\'file' + fileNum + '\')"></i>'
+							+ '<br/>'
+							+ '<font style="font-size:12px">' + f.name + '</font>'
+							+ '</div>'
+					);
+					fileNum ++;
+				};
+				reader.readAsDataURL(f);
+			});
+
+			//초기화 한다.
+			$("#input_file").val("");
+		}
+
+		// 파일 부분 삭제 함수
+		function fileDelete(fileNum){
+			var no = fileNum.replace(/[^0-9]/g, "");
+			content_files = [];
+			$('#' + fileNum).remove();
+
+			$("#popImgCheck").val('');
+			$("#popImgCheck").attr('data-ext','');
+			$("#popImgCheck").attr('data-size','');
+
+			fileCount --;
+		}
+
+		function removeContent(fildId){
+			console.log('fild',fildId);
+			delete_files.push(fildId);
+			$("#dbfile1").remove();
+
+			$("#popImgCheck").val('');
+			$("#popImgCheck").attr('data-ext','');
+			$("#popImgCheck").attr('data-size','');
+
+			content_files = [];
+
+			fileCount --;
+		}
+
+		/*
+         * 폼 submit 로직
+         */
+		function registerAction(){
+
+			if(!$("#is_form").valid()){
+				return false;
+			}
+
+			var sdate = new Date($("#datepicker-autoclose1").val());
+			var edate = new Date($("#datepicker-autoclose2").val());
+
+			if(sdate.getTime()>edate.getTime()){
+				alert("전시시작일, 전시종료일를 확인해주세요.");
+				return false;
+			}else if(sdate.getTime() == edate.getTime() && $("#dispStartTime").val() >= $("#dispEndTime").val() ){
+				alert("전시시작일, 전시종료일를 확인해주세요.");
+				return false;
+			}
+
+			var form = $("#is_form")[0];
+			var formData = new FormData(form);
+
+			for (var x = 0; x < content_files.length; x++) {
+				formData.append("file", content_files[x]);
+			}
+
+			for(var y = 0; y<delete_files.length; y++){
+				formData.append("deletefilenum", delete_files[y]);
+			}
+
+
+			/*
+            * 파일업로드 multiple ajax처리
+            */
+			$.ajax({
+				type: "POST",
+				url: "/mainpopEditProcess",
+				data : formData,
+				cache:false,
+				processData: false,
+				contentType: false,
+				success: function (data) {
+					console.log('data',data);
+					alert("메인팝업이 저장되었습니다.");
+					//location.reload();
+					location.href="/mainpopList";
+				},
+				error: function (xhr, status, error) {
+					alert("서버오류로 지연되고있습니다. 잠시 후 다시 시도해주시기 바랍니다.");
+					return false;
+				}
+			});
+			return false;
+		}
+
+		function listAction(){
+			// location.href='/mainpopList';
+			// if(document.referrer.indexOf('/mainpopList') > -1){
+			// 	history.back();
+			// }else{
+			// 	location.href='/mainpopList';
+			// }
+			$("#sch_form").attr("action", "/mainpopList").submit();
+		}
+
+		function cancelAction(){
+			var msg = "등록";
+			/*[# th:if="${mainpop.id == null}"]*/
+			msg = "등록";
+			/*[/]*/
+			/*[# th:if="${mainpop.id != null}"]*/
+			msg = "수정";
+			/*[/]*/
+			if(confirm(msg+"을 취소하시겠습니까?")){
+				location.href='/mainpopList';
+			}
+		}
+
+		function deleteAction(id){
+			if(confirm("삭제하시겠습니까?")){
+				var obj=[];
+				obj.push(id);
+				var url="/mainpopDelete";
+				$.ajax({
+					type : 'POST'
+					, async : true
+					, beforeSend : function (jqXHR, settings) {
+					}
+					, url : url //for ASP.NET, java
+					, data : 'deleteList='+obj
+					, success : function (changes) {
+						//debugger;
+
+						if(changes.success == true){
+							location.href="/mainpopList";
+						}
+					}
+					, complete : function (changes) {
+					}
+				});
+			}
+		}
+
+	</script>
+</head>
+
+<div class="page-wrapper" layout:fragment="content">
+	<div class="page-breadcrumb">
+		<div class="row">
+			<div class="col-12 d-flex no-block align-items-center">
+				<h4 class="page-title">메인팝업 관리</h4>
+			</div>
+		</div>
+	</div>
+
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-md-12">
+				<div class="card">
+					<form id="sch_form" name="sch_form" method="post">
+						<input type="hidden" name="dispYn" th:value="${searchDto.dispYn}"/>
+						<input type="hidden" name="langKoYn" th:value="${searchDto.langKoYn}"/>
+					</form>
+					<form class="form-horizontal" id="is_form" method="post" enctype="multipart/form-data"
+						  name="is_form"
+						  th:object="${mainpop}">
+						<input type="hidden" name="id" th:value="*{id}"/>
+						<div class="card-body">
+							<h4 class="card-title">메인팝업 <th:block th:if="*{id == null}" th:text="등록"></th:block><th:block th:if="*{id != null}" th:text="수정"></th:block><p style="text-align: right;color:red;font-size:15px">*항목은 필수 입력입니다.</p></h4>
+							<div class="form-group required row">
+								<label class="col-md-1 control-label">전시여부</label>
+								<div class="col-md-3">
+									<th:block th:if="*{id != null}">
+										<div class="form-check">
+											<input class="form-check-input" id="dispYn1" name="dispYn"
+												   th:checked="dispYn == 'Y'"
+												   th:field="*{dispYn}"
+												   type="radio" value="Y">
+											<label class="form-check-label mb-0" for="dispYn1">전시</label>
+										</div>
+										<div class="form-check">
+											<input class="form-check-input" id="dispYn2" name="dispYn"
+												   th:checked="dispYn == 'N'"
+												   th:field="*{dispYn}"
+												   type="radio" value="N">
+											<label class="form-check-label mb-0" for="dispYn2">미전시</label>
+										</div>
+									</th:block>
+									<th:block th:if="*{id == null}">
+										<div class="form-check">
+											<input class="form-check-input" id="dispYn1" name="dispYn"
+												   type="radio" value="Y">
+											<label class="form-check-label mb-0" for="dispYn1">전시</label>
+										</div>
+										<div class="form-check">
+											<input class="form-check-input" id="dispYn2" name="dispYn"
+												   type="radio" value="N" checked="checked">
+											<label class="form-check-label mb-0" for="dispYn2">미전시</label>
+										</div>
+									</th:block>
+								</div>
+							</div>
+							<div class="form-group required row">
+								<label class="col-md-1 control-label">언어구분</label>
+								<div class="col-md-9">
+									<th:block th:if="*{id != null}">
+										<div class="form-check">
+											<input class="form-check-input" id="langKoYn1" name="langKoYn"
+												   th:checked="langKoYn == 'Y'"
+												   th:field="*{langKoYn}"
+												   type="radio" value="Y">
+											<label class="form-check-label mb-0" for="langKoYn1">국문</label>
+										</div>
+										<div class="form-check">
+											<input class="form-check-input" id="langKoYn2" name="langKoYn"
+												   th:checked="langKoYn == 'N'"
+												   th:field="*{langKoYn}"
+												   type="radio" value="N">
+											<label class="form-check-label mb-0" for="langKoYn2">영문</label>
+										</div>
+									</th:block>
+
+									<th:block th:if="*{id == null}">
+										<div class="form-check">
+											<input class="form-check-input" id="langKoYn1" name="langKoYn"
+												   type="radio" value="Y" checked="checked">
+											<label class="form-check-label mb-0" for="langKoYn1">국문</label>
+										</div>
+										<div class="form-check">
+											<input class="form-check-input" id="langKoYn2" name="langKoYn"
+												   type="radio" value="N">
+											<label class="form-check-label mb-0" for="langKoYn2">영문</label>
+										</div>
+									</th:block>
+								</div>
+							</div>
+							<div class="form-group required row">
+								<label
+										class="col-md-1 control-label"
+										for="title"
+								>제목</label
+								>
+								<div class="col-sm-4">
+									<input
+											class="form-control"
+											id="title"
+											name="title"
+											maxlength="100"
+											placeholder="제목을 입력하세요."
+											th:value="${@commUtils.getUnEscHtml(mainpop.title)}"
+											oninput="numberMaxLength(this);"
+											type="text"
+									/>
+								</div>
+								<div class="col-sm-4">
+									<middle class="text-muted">텍스트만 입력 가능<span id="counter">(0 / 최대 100자)</span></middle>
+								</div>
+							</div>
+							<div class="form-group required row">
+								<label class="col-md-1 control-label">팝업이미지</label>
+								<div class="col-md-4">
+									<div class="custom-file">
+										<input class="custom-file-input" id="input_file"  type="file">
+										<input type="hidden" name="popImgCheck" id="popImgCheck" value="" th:value="*{popImgName}" th:attr="data-ext=*{popImgExt}" th:attrappend="data-size=*{popImgLength}"/>
+										<label class="custom-file-label" for="input_file"></label>
+										<br/>
+										<div id="articlefileChange">
+											<th:block th:if="*{not #strings.isEmpty(popImgPath)}">
+												<div th:id="'dbfile1'">
+													<img th:src="*{popImgPath}" width="100" height="100"/>
+													<i class="me-2 mdi mdi-minus"  th:onclick="removeContent([[*{popImgRealPath}]])"></i>
+													<br/>
+													<font style="font-size:12px" th:text="*{popImgName}"></font>
+												</div>
+											</th:block>
+										</div>
+									</div>
+								</div>
+								<div class="col-md-4">
+									<middle class="text-muted">2MB 이하 jpg, png만 업로드 가능 (권장사이즈 가로 최대 800px 세로 최대 550px) </middle>
+								</div>
+							</div>
+							<div class="form-group row">
+								<label
+										class="col-md-1"
+										for="widthPoint"
+								>가로 위치</label
+								>
+								<div class="col-sm-4">
+									<input
+											class="form-control"
+											id="widthPoint"
+											name="widthPoint"
+											placeholder=""
+											th:field="*{widthPoint}"
+											type="text"
+											onkeyup="this.value=this.value.replace(/[^0-9]/g,'');"
+									/>
+								</div>
+							</div>
+							<div class="form-group row">
+								<label
+										class="col-md-1"
+										for="heightPoint"
+								>세로 위치</label
+								>
+								<div class="col-sm-4">
+									<input
+											class="form-control"
+											id="heightPoint"
+											name="heightPoint"
+											placeholder=""
+											th:field="*{heightPoint}"
+											type="text"
+											onkeyup="this.value=this.value.replace(/[^0-9]/g,'');"
+									/>
+								</div>
+							</div>
+							<div class="form-group row">
+								<label
+										class="col-md-1"
+										for="popImgLink"
+								>팝업 연결링크</label
+								>
+								<div class="col-sm-4">
+									<input
+											class="form-control"
+											id="popImgLink"
+											name="popImgLink"
+											placeholder=""
+											th:field="*{popImgLink}"
+											type="text"
+									/>
+
+									<th:block th:if="*{id != null}">
+										<div class="form-check">
+											<input class="form-check-input" id="popImgLinkTarget1" name="popImgLinkTarget"
+												   th:checked="popImgLinkTarget == '_blank'"
+												   th:field="*{popImgLinkTarget}"
+												   type="radio" value="_blank">
+											<label class="form-check-label mb-0" for="popImgLinkTarget1">새창</label>
+										</div>
+										<div class="form-check">
+											<input class="form-check-input" id="popImgLinkTarget2" name="popImgLinkTarget"
+												   th:checked="popImgLinkTarget == '_self'"
+												   th:field="*{popImgLinkTarget}"
+												   type="radio" value="_self">
+											<label class="form-check-label mb-0" for="popImgLinkTarget2">현재창</label>
+										</div>
+									</th:block>
+
+									<th:block th:if="*{id == null}">
+										<div class="form-check">
+											<input class="form-check-input" id="popImgLinkTarget1" name="popImgLinkTarget"
+												   type="radio" value="_blank">
+											<label class="form-check-label mb-0" for="popImgLinkTarget1">새창</label>
+										</div>
+										<div class="form-check">
+											<input class="form-check-input" id="popImgLinkTarget2" name="popImgLinkTarget"
+												   type="radio" value="_self" checked="checked">
+											<label class="form-check-label mb-0" for="popImgLinkTarget2">현재창</label>
+										</div>
+									</th:block>
+								</div>
+							</div>
+							<div class="form-group required row">
+								<label class="col-md-1 control-label">전시시작일시</label>
+								<div class="col-md-2">
+									<div class="input-group">
+										<input class="form-control" id="datepicker-autoclose1" name="dispStartDay"
+											   placeholder="yyyy-mm-dd"
+											   type="text"
+											   th:value="*{dispStartDay}"
+											   readOnly="true">
+									</div>
+								</div>
+								<div class="col-md-2">
+									<select aria-hidden="true"
+											class="select2 form-select shadow-none select2-hidden-accessible form-control"
+											data-select2-id="1" id="dispStartTime" name="dispStartTime"
+											style="width: 100%; height: 36px" tabindex="-1">
+										<option th:selected="*{dispStartTime} == '00'" value="00">00시</option>
+										<option th:selected="*{dispStartTime} == '01'" value="01">01시</option>
+										<option th:selected="*{dispStartTime} == '02'" value="02">02시</option>
+										<option th:selected="*{dispStartTime} == '03'" value="03">03시</option>
+										<option th:selected="*{dispStartTime} == '04'" value="04">04시</option>
+										<option th:selected="*{dispStartTime} == '05'" value="05">05시</option>
+										<option th:selected="*{dispStartTime} == '06'" value="06">06시</option>
+										<option th:selected="*{dispStartTime} == '07'" value="07">07시</option>
+										<option th:selected="*{dispStartTime} == '08'" value="08">08시</option>
+										<option th:selected="*{dispStartTime} == '09'" value="09">09시</option>
+										<option th:selected="*{dispStartTime} == '10'" value="10">10시</option>
+										<option th:selected="*{dispStartTime} == '11'" value="11">11시</option>
+										<option th:selected="*{dispStartTime} == '12'" value="12">12시</option>
+										<option th:selected="*{dispStartTime} == '13'" value="13">13시</option>
+										<option th:selected="*{dispStartTime} == '14'" value="14">14시</option>
+										<option th:selected="*{dispStartTime} == '15'" value="15">15시</option>
+										<option th:selected="*{dispStartTime} == '16'" value="16">16시</option>
+										<option th:selected="*{dispStartTime} == '17'" value="17">17시</option>
+										<option th:selected="*{dispStartTime} == '18'" value="18">18시</option>
+										<option th:selected="*{dispStartTime} == '19'" value="19">19시</option>
+										<option th:selected="*{dispStartTime} == '20'" value="20">20시</option>
+										<option th:selected="*{dispStartTime} == '21'" value="21">21시</option>
+										<option th:selected="*{dispStartTime} == '22'" value="22">22시</option>
+										<option th:selected="*{dispStartTime} == '23'" value="23">23시</option>
+									</select>
+								</div>
+								<div class="col-md-4">
+									<middle class="text-muted">00~23시 사이에서 설정하세요.</middle>
+								</div>
+							</div>
+
+							<div class="form-group required row">
+								<label class="col-md-1 control-label">전시종료일시</label>
+								<div class="col-md-2">
+									<div class="input-group">
+										<input class="form-control" id="datepicker-autoclose2" name="dispEndDay"
+											   placeholder="yyyy-mm-dd"
+											   type="text"
+											   th:value="*{dispEndDay}"
+											   readOnly="true">
+									</div>
+								</div>
+								<div class="col-md-2">
+									<select aria-hidden="true"
+											class="select2 form-select shadow-none select2-hidden-accessible form-control"
+											data-select2-id="23" id="dispEndTime" name="dispEndTime"
+											style="width: 100%; height: 36px"  tabindex="-1">
+										<option th:selected="*{dispEndTime} == '00'" value="00">00시</option>
+										<option th:selected="*{dispEndTime} == '01'" value="01">01시</option>
+										<option th:selected="*{dispEndTime} == '02'" value="02">02시</option>
+										<option th:selected="*{dispEndTime} == '03'" value="03">03시</option>
+										<option th:selected="*{dispEndTime} == '04'" value="04">04시</option>
+										<option th:selected="*{dispEndTime} == '05'" value="05">05시</option>
+										<option th:selected="*{dispEndTime} == '06'" value="06">06시</option>
+										<option th:selected="*{dispEndTime} == '07'" value="07">07시</option>
+										<option th:selected="*{dispEndTime} == '08'" value="08">08시</option>
+										<option th:selected="*{dispEndTime} == '09'" value="09">09시</option>
+										<option th:selected="*{dispEndTime} == '10'" value="10">10시</option>
+										<option th:selected="*{dispEndTime} == '11'" value="11">11시</option>
+										<option th:selected="*{dispEndTime} == '12'" value="12">12시</option>
+										<option th:selected="*{dispEndTime} == '13'" value="13">13시</option>
+										<option th:selected="*{dispEndTime} == '14'" value="14">14시</option>
+										<option th:selected="*{dispEndTime} == '15'" value="15">15시</option>
+										<option th:selected="*{dispEndTime} == '16'" value="16">16시</option>
+										<option th:selected="*{dispEndTime} == '17'" value="17">17시</option>
+										<option th:selected="*{dispEndTime} == '18'" value="18">18시</option>
+										<option th:selected="*{dispEndTime} == '19'" value="19">19시</option>
+										<option th:selected="*{dispEndTime} == '20'" value="20">20시</option>
+										<option th:selected="*{dispEndTime} == '21'" value="21">21시</option>
+										<option th:selected="*{dispEndTime} == '22'" value="22">22시</option>
+										<option th:selected="*{dispEndTime} == '23' or *{dispEndTime} == null" value="23" >23시</option>
+									</select>
+								</div>
+								<div class="col-md-4">
+									<middle class="text-muted">00~23시 사이에서 설정하세요.</middle>
+								</div>
+							</div>
+						</div>
+
+						<div class="border-top" style="text-align:center;">
+							<div class="card-body">
+								<button class="btn btn-secondary text-white" onclick="listAction();"
+										type="button">
+									목록
+								</button>
+								<button class="btn btn-success text-white" onclick="registerAction();"
+										type="button">
+									<th:block th:if="*{id == null}" th:text="등록"></th:block>
+									<th:block th:if="*{id != null}" th:text="수정"></th:block>
+								</button>
+								<th:block th:if="*{id == null}">
+									<button class="btn btn-danger text-white" onclick="cancelAction();" type="button">
+										취소
+									</button>
+								</th:block>
+								<th:block th:if="*{id != null}">
+									<button class="btn btn-danger text-white" th:onclick="deleteAction([[*{id}]]);" type="button">
+										삭제
+									</button>
+								</th:block>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+</div>
+
+</html>

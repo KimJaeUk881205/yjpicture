@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ko"
+	  layout:decorate="~{layout/default_layout}"
+	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	  xmlns:th="http://www.thymeleaf.org">
+<head>
+	<!-- Custom CSS -->
+	<link
+			href="/assets/libs/jquery-minicolors/jquery.minicolors.css"
+			rel="stylesheet"
+			th:href="@{/assets/libs/jquery-minicolors/jquery.minicolors.css}"
+			type="text/css"
+	/>
+	<link
+			href="/assets/libs/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css"
+			rel="stylesheet"
+			th:href="@{/assets/libs/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css}"
+			type="text/css"
+	/>
+	<link
+			href="/assets/libs/quill/dist/quill.snow.css"
+			rel="stylesheet"
+			th:href="@{/assets/libs/quill/dist/quill.snow.css}"
+			type="text/css"
+	/>
+	<style>
+		.form-group.required .control-label:after { content:"*";color:red; }
+	</style>
+	<style>
+		.card-body {padding-bottom:0;}
+		.form-group {padding:0;border-top:2px solid #e9ecef;margin:0;}
+		.form-group .col-md-3 {margin:0;flex:0 0 15%;background:#f8f8f8;}
+		.form-group div.col-sm-3 {padding:15px;flex:0 0 35%;}
+		.form-group div.col-sm-3+label.col-md-3 {border-left:1px solid #e9ecef;padding-left:15px;}
+		.form-group label.col-md-3 {padding:15px 5px;padding-left:15px;border-right:1px solid #e9ecef;}
+		.form-group .col-sm-9 {padding:15px;flex:0 0 85%;}
+		.border-top {padding-bottom:1.25rem;}
+	</style>
+	<!-- This Page JS -->
+	<script href="/assets/libs/inputmask/dist/min/jquery.inputmask.bundle.min.js"
+			th:src="@{/assets/libs/inputmask/dist/min/jquery.inputmask.bundle.min.js}"></script>
+	<script href="/dist/js/pages/mask/mask.init.js" th:src="@{/dist/js/pages/mask/mask.init.js}"></script>
+	<script href="/assets/libs/jquery-asColor/dist/jquery-asColor.min.js"
+			th:src="@{/assets/libs/jquery-asColor/dist/jquery-asColor.min.js}"></script>
+	<script href="/assets/libs/jquery-asGradient/dist/jquery-asGradient.js"
+			th:src="@{/assets/libs/jquery-asGradient/dist/jquery-asGradient.js}"></script>
+	<script href="/assets/libs/jquery-asColorPicker/dist/jquery-asColorPicker.min.js"
+			th:src="@{/assets/libs/jquery-asColorPicker/dist/jquery-asColorPicker.min.js}"></script>
+	<script href="/assets/libs/jquery-minicolors/jquery.minicolors.min.js"
+			th:src="@{/assets/libs/jquery-minicolors/jquery.minicolors.min.js}"></script>
+	<script href="/assets/libs/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"
+			th:src="@{/assets/libs/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js}"></script>
+	<script href="/assets/libs/quill/dist/quill.min.js" th:src="@{/assets/libs/quill/dist/quill.min.js}"></script>
+
+	<script href="/assets/libs/jquery-validation/dist/jquery.validate.min.js"
+			th:src="@{/assets/libs/jquery-validation/dist/jquery.validate.min.js}"></script>
+	<script href="/assets/libs/jquery-validation/dist/additional-methods.js"
+			th:src="@{/assets/libs/jquery-validation/dist/additional-methods.js}"></script>
+	<script href="/js/jquery-common.js" th:src="@{/js/jquery-common.js}"></script>
+
+	<script href="/dext5editor/js/dext5editor.js"
+			th:src="@{/dext5editor/js/dext5editor.js}"></script>
+	<script th:inline="javascript">
+		$(function () {
+			$("#datepicker-autoclose").datepicker({
+				format:'yyyy-mm-dd',
+				language: 'kr',
+				autoclose: true,
+				todayHighlight: true,
+			});
+
+
+
+			$("#input_file").on("change", fileCheck);
+
+			//좌측 메뉴 활성화
+			$(".sidebar-link").each(function(){
+				if($(this).attr("href").indexOf("qnaList") > 0){
+					$(this).closest('li').addClass("selected");
+					return false;
+				}
+			});
+
+			$('#answerContents').keyup(function (e){
+				var content = $(this).val();
+				$('#counter').html("("+content.length+" / 최대 5000자)");    //글자수 실시간 카운팅
+				if (content.length > 5000){
+					// alert("최대 5000자까지 입력 가능합니다.");
+					// $(this).val(content.substring(0, 5000));
+					$('#counter').html("(5000 / 최대 5000자)");
+				}
+			});
+
+			$('#counter').html("("+$("#answerContents").val().length+" / 최대 5000자)");
+
+			$("#is_form").validate({
+				ignore: "",
+				rules: {
+					answerTitle: {required:function(elements){
+							var val = elements.value;
+							val = val.replace(/^\s+|\s+$/g, '');
+							elements.value = val;
+							if(val.length == 0){
+								return true;
+							}else{
+								return false;
+							}
+						}}
+					,answerContents : {required:function(elements){
+							var val = elements.value;
+							val = val.replace(/^\s+|\s+$/g, '');
+							elements.value = val;
+							if(val.length == 0){
+								return true;
+							}else{
+								return false;
+							}
+						}}
+				},
+
+				messages: {
+					answerTitle: {required:"답변제목을 입력하세요."}
+					,answerContents : {required:"답변내용을 입력하세요."}
+				},
+				errorPlacement: function(error, element) {
+
+				}
+			});
+
+		});
+
+
+
+
+		// 파일 현재 필드 숫자 totalCount랑 비교값
+		var fileCount = 0;
+		// 해당 숫자를 수정하여 전체 업로드 갯수를 정한다.
+		var totalCount = 10;
+		// 파일 고유넘버
+		var fileNum = 0;
+		// 첨부파일 배열
+		var content_files = [];
+		var delete_files = [];
+
+		function fileCheck(e) {
+			var files = e.target.files;
+
+			// 파일 배열 담기
+			var filesArr = Array.prototype.slice.call(files);
+
+			// 파일 개수 확인 및 제한
+			if (fileCount + filesArr.length > totalCount) {
+				$.alert('파일은 최대 '+totalCount+'개까지 업로드 할 수 있습니다.');
+				return;
+			} else {
+				fileCount = fileCount + filesArr.length;
+			}
+
+			// 각각의 파일 배열담기 및 기타
+			filesArr.forEach(function (f) {
+				var reader = new FileReader();
+				reader.onload = function (e) {
+					content_files.push(f);
+					$('#articlefileChange').append(
+							'<div id="file' + fileNum + '" onclick="fileDelete(\'file' + fileNum + '\')">'
+							+ '<font style="font-size:12px">' + f.name + '</font>'
+							+ '<i class="me-2 mdi mdi-minus"></i>'
+							+ ''
+					);
+					fileNum ++;
+				};
+				reader.readAsDataURL(f);
+			});
+
+			//초기화 한다.
+			$("#input_file").val("");
+		}
+
+		// 파일 부분 삭제 함수
+		function fileDelete(fileNum){
+			var no = fileNum.replace(/[^0-9]/g, "");
+			content_files[no].is_delete = true;
+			$('#' + fileNum).remove();
+			fileCount --;
+		}
+
+		function removeContent(fildId){
+			console.log('fild',fildId);
+			delete_files.push(fildId);
+			$("#dbfile"+fildId).remove();
+		}
+
+		/*
+         * 폼 submit 로직
+         */
+		function registerAction(){
+
+			if(!$('#is_form').valid()){
+				return false;
+			}
+
+			var form = $("#is_form")[0];
+			var formData = new FormData(form);
+
+			for (var x = 0; x < content_files.length; x++) {
+				// 삭제 안한것만 담아 준다.
+				if(!content_files[x].is_delete){
+					formData.append("file", content_files[x]);
+				}
+			}
+
+			for(var y = 0; y<delete_files.length; y++){
+				formData.append("deletefilenum", delete_files[y]);
+			}
+
+
+			/*
+            * 파일업로드 multiple ajax처리
+            */
+			$.ajax({
+				type: "POST",
+				url: "/qnaEditProcess",
+				data : formData,
+				cache:false,
+				processData: false,
+				contentType: false,
+				success: function (data) {
+					console.log('data',data);
+					alert("답변이 저장되었습니다.");
+					location.href="/qnaList";
+				},
+				error: function (xhr, status, error) {
+					alert("서버오류로 지연되고있습니다. 잠시 후 다시 시도해주시기 바랍니다.");
+					return false;
+				}
+			});
+			return false;
+		}
+
+		function listAction(){
+			$("#sch_form").attr("action", "/qnaList").submit();
+		}
+
+		function cancelAction(){
+			var msg = "등록";
+			/*[# th:if="${obj.answerDate == null}"]*/
+			msg = "등록";
+			/*[/]*/
+			/*[# th:if="${obj.answerDate != null}"]*/
+			msg = "수정";
+			/*[/]*/
+			if(confirm(msg+"을 취소하시겠습니까?")){
+				location.href='/qnaList';
+			}
+		}
+
+		function deleteAction(id){
+			if(confirm("삭제하시겠습니까?")){
+				var obj=[];
+				obj.push(id);
+				var url="/qnaDelete";
+				$.ajax({
+					type : 'POST'
+					, async : true
+					, beforeSend : function (jqXHR, settings) {
+					}
+					, url : url //for ASP.NET, java
+					, data : 'deleteList='+obj
+					, success : function (changes) {
+						//debugger;
+
+						if(changes.success == true){
+							location.href="/qnaList";
+						}
+					}
+					, complete : function (changes) {
+					}
+				});
+			}
+		}
+	</script>
+</head>
+
+<div class="page-wrapper" layout:fragment="content">
+	<div class="page-breadcrumb">
+		<div class="row">
+			<div class="col-12 d-flex no-block align-items-center">
+				<h4 class="page-title">문의하기 관리</h4>
+			</div>
+		</div>
+	</div>
+
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-md-12">
+				<div class="card">
+					<form id="sch_form" name="sch_form" method="post">
+						<input type="hidden" name="searchText" th:value="${searchDto.searchText}"/>
+						<input type="hidden" name="searchStartDate" th:value="${searchDto.searchStartDate}"/>
+						<input type="hidden" name="searchEndDate" th:value="${searchDto.searchEndDate}"/>
+						<input type="hidden" name="searchAnsStat" th:value="${searchDto.searchAnsStat}"/>
+						<input type="hidden" name="searchCate" th:value="${searchDto.searchCate}"/>
+					</form>
+					<form class="form-horizontal" id="is_form" method="post" enctype="multipart/form-data"
+						  name="is_form"
+						  th:object="${obj}">
+						<input type="hidden" name="id" th:value="*{id}"/>
+						<input type="hidden" name="qnaCate" th:value="*{qnaCate}"/>
+						<input type="hidden" name="userName" th:value="*{userName}"/>
+						<input type="hidden" name="phone" th:value="*{phone}"/>
+						<input type="hidden" name="userEmail" th:value="*{userEmail}"/>
+						<input type="hidden" name="userCompany" th:value="*{userCompany}"/>
+						<input type="hidden" name="userContents" th:value="*{userContents}"/>
+						<input type="hidden" name="userPosition" th:value="*{userPosition}"/>
+						<input type="hidden" name="country" th:value="*{country}"/>
+						<input type="hidden" name="sendEmail" th:value="*{sendEmail}"/>
+						<input type="hidden" name="fileName" th:value="*{fileName}"/>
+						<input type="hidden" name="fileExt" th:value="*{fileExt}"/>
+						<input type="hidden" name="fileLength" th:value="*{fileLength}"/>
+						<input type="hidden" name="uriPath" th:value="*{uriPath}"/>
+						<input type="hidden" name="filePath" th:value="*{filePath}"/>
+
+						<div class="card-body">
+							<h4 class="card-title">문의하기 <th:block th:if="*{answerDate == null}" th:text="등록"></th:block><th:block th:if="*{answerDate != null}" th:text="수정"></th:block><p style="text-align: right;color:red;font-size:15px">*항목은 필수 입력입니다.</p></h4>
+
+							<div class="form-group row">
+								<label class="col-md-3">문의 구분</label>
+								<div class="col-sm-3">
+									<th:block th:if="*{qnaCate == 'CMO'}" th:text="|위탁생산(CMO)|"></th:block>
+									<th:block th:if="*{qnaCate == 'CDO'}" th:text="|공정개발(CDO)|"></th:block>
+									<th:block th:if="*{qnaCate == 'ADDSER'}" th:text="|부가 서비스(품질시험, 보관 등)|"></th:block>
+									<th:block th:if="*{qnaCate == 'PARTNERSHIP'}" th:text="|파트너십|"></th:block>
+									<th:block th:if="*{qnaCate == 'RECRUIMENT'}" th:text="|채용|"></th:block>
+									<th:block th:if="*{qnaCate == 'OTHER'}" th:text="|기타|"></th:block>
+								</div>
+								<label class="col-md-3">작성 날짜</label>
+								<div class="col-sm-3" th:text="*{#temporals.format(regDtime, 'yyyy-MM-dd')}">
+
+								</div>
+							</div>
+
+							<div class="form-group row">
+								<label class="col-md-3">작성자</label>
+								<div class="col-sm-3" th:text="*{userName}">
+
+								</div>
+								<label class="col-md-3">E-mail</label>
+								<div class="col-sm-3" th:text="*{userEmail}">
+
+								</div>
+							</div>
+
+							<div class="form-group row">
+								<label class="col-md-3">연락처</label>
+								<div class="col-sm-3" th:text="*{phone} == null or *{phone} == '' ? '-' : *{phone}">
+
+								</div>
+								<label class="col-md-3">국가</label>
+								<div class="col-sm-3" th:text="*{country}">
+
+								</div>
+							</div>
+
+							<div class="form-group row">
+								<label class="col-md-3">회사</label>
+								<div class="col-sm-3" th:text="*{userCompany} == null or *{userCompany} == '' ? '-' : *{userCompany}">
+
+								</div>
+								<label class="col-md-3">직책</label>
+								<div class="col-sm-3" th:text="*{userPosition} == null or *{userPosition} == '' ? '-' : *{userPosition}">
+
+								</div>
+							</div>
+
+							<div class="form-group row">
+								<label class="col-md-3">문의 내용</label>
+								<div class="col-sm-9" th:utext="${#strings.replace(obj.userContents, nlString, '&lt;br /&gt;')}">
+								</div>
+							</div>
+
+							<div class="form-group row">
+								<label class="col-md-3">첨부파일</label>
+								<div class="col-sm-9">
+									<th:block th:if="*{filePath} != null and *{filePath} != ''">
+										<a href="#none" th:href="@{/download(id=*{id})}" th:utext="*{fileName}">Kolon_20211111657419.pdf</a>
+									</th:block>
+								</div>
+							</div>
+
+							<div class="form-group row">
+								<label class="col-md-3">답변 날짜</label>
+								<div class="col-sm-9" th:text="${#temporals.format(obj.answerDate, 'yyyy-MM-dd')}">
+
+								</div>
+							</div>
+
+							<div class="form-group required row">
+								<label class="col-md-3 control-label">답변 제목</label>
+								<div class="col-sm-9">
+									<input
+											class="form-control"
+											id="answerTitle"
+											name="answerTitle"
+											placeholder="제목을 입력하세요."
+											maxlength="200"
+											oninput="numberMaxLength(this);"
+											th:value="${@commUtils.getUnEscHtml(obj.answerTitle == null ? '안녕하세요, 코오롱바이오텍입니다.' : obj.answerTitle)}"
+											type="text"
+									/>
+								</div>
+							</div>
+
+							<div class="form-group required row">
+								<label class="col-md-3 control-label">답변 내용</label>
+								<div class="col-sm-9">
+									<textarea class="form-control" maxlength="5000" style="margin-top: 0px; margin-bottom: 0px; height: 150px;" id="answerContents" name="answerContents" th:utext="*{answerContents}" oninput="numberMaxLength(this);"></textarea>
+									<middle class="text-muted">텍스트만 입력 가능<span id="counter">(0 / 최대 5000자)</span></middle>
+								</div>
+							</div>
+
+							<div class="form-group row">
+								<label class="col-md-3">이메일 전송</label>
+								<div class="col-sm-9">
+									best_cdmo@kolon.com
+								</div>
+							</div>
+
+						</div>
+						<div class="border-top" style="text-align:center;">
+							<div class="card-body">
+								<button class="btn btn-secondary text-white" onclick="listAction();" type="button">
+									목록
+								</button>
+								<button class="btn btn-success text-white" onclick="registerAction();"
+										type="button">
+									<th:block th:if="*{answerDate == null}" th:text="등록"></th:block>
+									<th:block th:if="*{answerDate != null}" th:text="수정"></th:block>
+								</button>
+								<th:block th:if="*{answerDate == null}">
+									<button class="btn btn-danger text-white" onclick="cancelAction();" type="button">
+										취소
+									</button>
+								</th:block>
+								<th:block th:if="*{answerDate != null}">
+									<button class="btn btn-danger text-white" th:onclick="deleteAction([[*{id}]]);" type="button">
+										삭제
+									</button>
+								</th:block>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+</div>
+
+</html>

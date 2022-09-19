@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ko"
+      layout:decorate="~{layout/default_layout}"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- Custom CSS -->
+
+    <link
+            href="/assets/libs/jquery-minicolors/jquery.minicolors.css"
+            rel="stylesheet"
+            th:href="@{/assets/libs/jquery-minicolors/jquery.minicolors.css}"
+            type="text/css"
+    />
+    <link
+            href="/assets/libs/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css"
+            rel="stylesheet"
+            th:href="@{/assets/libs/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css}"
+            type="text/css"
+    />
+    <link
+            href="/assets/libs/quill/dist/quill.snow.css"
+            rel="stylesheet"
+            th:href="@{/assets/libs/quill/dist/quill.snow.css}"
+            type="text/css"
+    />
+    <style>
+        .form-group.required .control-label:after { content:"*";color:red; }
+        input[type=password]::-ms-reveal {
+            display: none;
+            width: 0;
+            height: 0;
+        }
+    </style>
+    <!-- This Page JS -->
+    <script href="/assets/libs/inputmask/dist/min/jquery.inputmask.bundle.min.js"
+            th:src="@{/assets/libs/inputmask/dist/min/jquery.inputmask.bundle.min.js}"></script>
+    <script href="/dist/js/pages/mask/mask.init.js" th:src="@{/dist/js/pages/mask/mask.init.js}"></script>
+    <script href="/assets/libs/jquery-asColor/dist/jquery-asColor.min.js"
+            th:src="@{/assets/libs/jquery-asColor/dist/jquery-asColor.min.js}"></script>
+    <script href="/assets/libs/jquery-asGradient/dist/jquery-asGradient.js"
+            th:src="@{/assets/libs/jquery-asGradient/dist/jquery-asGradient.js}"></script>
+    <script href="/assets/libs/jquery-asColorPicker/dist/jquery-asColorPicker.min.js"
+            th:src="@{/assets/libs/jquery-asColorPicker/dist/jquery-asColorPicker.min.js}"></script>
+    <script href="/assets/libs/jquery-minicolors/jquery.minicolors.min.js"
+            th:src="@{/assets/libs/jquery-minicolors/jquery.minicolors.min.js}"></script>
+    <script href="/assets/libs/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"
+            th:src="@{/assets/libs/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js}"></script>
+    <script href="/assets/libs/quill/dist/quill.min.js" th:src="@{/assets/libs/quill/dist/quill.min.js}"></script>
+
+    <script href="/assets/libs/jquery-validation/dist/jquery.validate.min.js"
+            th:src="@{/assets/libs/jquery-validation/dist/jquery.validate.min.js}"></script>
+    <script href="/assets/libs/jquery-validation/dist/additional-methods.js"
+            th:src="@{/assets/libs/jquery-validation/dist/additional-methods.js}"></script>
+    <script href="/js/jquery-common.js" th:src="@{/js/jquery-common.js}"></script>
+    <script th:inline="javascript">
+    $(function () {
+
+        //좌측 메뉴 활성화
+        $(".sidebar-link").each(function(){
+           if($(this).attr("href").indexOf("userList") > 0){
+               $(this).addClass("active");
+               $(this).closest('li').addClass("active");
+               $(this).closest('li').closest('ul').addClass("in");
+               $(this).closest('li').closest('ul').prev().addClass("active");
+               $(this).closest('li').closest('ul').closest('li').addClass('selected');
+               return false;
+           }
+        });
+
+        changeDomain = function(obj){
+            if(obj.value != ""){
+                $("#emailDomain").val(obj.value);
+                $("#emailDomain").attr("readOnly",true);
+            }else{
+                $("#emailDomain").val('');
+                $("#emailDomain").removeAttr("readOnly");
+            }
+        }
+
+        //$("#changedmain2").trigger('change');
+
+
+        $("#is_form").validate({
+            ignore: "",
+            rules: {
+                /*[# th:if="${member.id == null}"]*/
+                loginId: {
+                    required: true ,
+                    regex: /^[a-z0-9\d_-]{4,14}$/
+                }
+                ,samecheck:{
+                    required: true
+                },
+                /*[/]*/
+                name:{
+                    required: true,
+                    regex: /^[가-힣a-zA-Z]+$/
+                }
+                /*[# th:if="${member.id == null}"]*/
+                ,password:{
+                    required: true,
+                    regex : /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?^=-])[A-Za-z\d$@$!%*#?^=-]{8,25}$/
+                }
+                ,password1:{
+                    required: true
+                    ,equalTo: "#passwd"
+                }
+                /*[/]*/
+                /*[# th:if="${member.id != null}"]*/
+                ,password:{
+                    passChange : true
+                }
+                ,mPassword:{
+                    required : function(element){
+                        return $("#passwd").val() != '' ? true : false;
+                    }
+                }
+                /*[/]*/
+                ,emailId:{
+                    required: function(elements){
+                        var val = elements.value;
+                        val = val.replace(/^\s+|\s+$/g, '');
+                        elements.value = val;
+                        if(val.length == 0){
+                            return true;
+                        }else{
+                            return false;
+                        }
+                    }
+                }
+                ,emailDomain:{
+                    required: true,
+                    regex : /^([a-z0-9-]+\.)+[a-z0-9]{2,4}$/
+                }
+                ,pnum:{
+                    required: true,
+                    regex : /^01([0|1|6|7|8|9])-(\d{3,4})-(\d{4})$/
+                }
+                ,rank:{
+                    regex: /^[가-힣a-zA-Z]+$/
+                }
+                ,useYn:{
+                    required: true
+                }
+            },
+            messages : {
+                /*[# th:if="${member.id == null}"]*/
+                loginId : {
+                    required: "로그인 아이디는 필수입니다." ,
+                    regex: "아이디는 4-14자의 영문소문자,숫자와 특수문자(_),(-)만 사용 가능합니다."
+                }
+                ,samecheck:{
+                    required: "아이디 중복체크를 해주세요."
+                },
+                /*[/]*/
+                name:{
+                    required: "이름을 입력해주세요.",
+                    regex: "이름은 글자(한글,영문)만 입력가능합니다."
+                }
+                /*[# th:if="${member.id == null}"]*/
+                ,password:{
+                    required: "비밀번호를 입력해주세요.",
+                    regex: "비밀번호는 8자~25자 이내로, 영문/숫자/특수문자를 조합해서 사용해야 합니다."
+                }
+                ,password1:{
+                    required: "비밀번호 재입력을 확인해주세요."
+                    ,equalTo: "비밀번호를 확인해 주세요."
+                }
+                /*[/]*/
+                /*[# th:if="${member.id != null}"]*/
+                ,password:{
+                    passChange: "비밀번호는 8자~25자 이내로, 영문/숫자/특수문자를 조합해서 사용해야 합니다."
+                }
+                ,mPassword:{
+                    required : "마스터 관리자 비밀번호를 입력해주세요."
+                }
+                /*[/]*/
+                ,emailId:{
+                    required: "이메일아이디를 입력해주세요."
+                }
+                ,emailDomain:{
+                    required: "이메일도메인을 입력해주세요.",
+                    regex : "유효한 도메인을 입력해주세요."
+                }
+                ,pnum:{
+                    required: "연락처를 입력해주세요.",
+                    regex : "휴대폰 번호는 -(하이픈) 포함하여 숫자 13자리까지만 입력가능합니다."
+                }
+                ,rank:{
+                    regex: "직급은 글자(한글,영문)만 입력가능합니다."
+                }
+                ,useYn:{
+                    required: "사용여부를 선택해주세요."
+                }
+
+            }
+        });
+
+        recheck = function(obj){
+            $(obj).val($(obj).val().replace(/^\s+|\s+$/g, ''));
+            $("#samecheck").val('');
+        }
+
+        sameIdCheck = function(){
+            console.log(1);
+            var val = $("#loginId").val();
+            val = val.replace(/^\s+|\s+$/g, '');
+            $("#loginId").val(val);
+
+            if(val.length == 0){
+                alert("로그인 아이디는 필수입니다.");
+                return false;
+            }
+
+            if(!/^[a-z0-9\d_-]{4,14}$/.test(val)){
+                alert("아이디는 4-14자의 영문소문자,숫자와 특수문자(_),(-)만 사용 가능합니다.");
+                return false;
+            }
+
+            var url = '/loginSameCheck';
+            $.ajax({
+                dataType : 'json'
+                , type : 'POST'
+                , async : true
+                , beforeSend : function (jqXHR, settings) {
+
+                }
+                , url : url //for ASP.NET, java
+                , data : { loginId: $("#loginId").val() }
+                , success : function (changes) {
+                    console.log('changes',changes);
+                    alert(changes.message);
+                    if(!changes.success){
+                        $("#samecheck").val('');
+                    }else{
+                        $("#samecheck").val('true');
+                    }
+                }
+                , complete : function () {
+
+                }
+            });
+        }
+
+        updateUser = function(){
+            if(!$('#is_form').valid()) return false;
+
+            var form = $("#is_form")[0];
+            var formData = new FormData(form);
+
+            var url="";
+
+            /*[# th:if="${member.id == null}"]*/
+                url="/createUserAjax";
+            /*[/]*/
+            /*[# th:if="${member.id != null}"]*/
+                url="/updateUserAjax";
+            /*[/]*/
+
+            $.ajax({
+                type : 'POST'
+                , url : url //for ASP.NET, java
+                , data : formData
+                ,cache:false
+                ,processData: false
+                ,contentType: false
+                , success : function (changes) {
+                    //debugger;
+                    console.log('changes',changes);
+                    var msg = changes.message;
+                    alert(msg);
+                    if(changes.success == true){
+                        location.href="/userList";
+                    }
+                }
+                ,error: function (xhr, status, error) {
+                    alert("서버오류로 지연되고있습니다. 잠시 후 다시 시도해주시기 바랍니다.");
+                    return false;
+                }
+            });
+            return false;
+        }
+
+
+        $("#pnum").on("keyup",function(){
+           $(this).val($(this).val().replace(/[^0-9\-]/gi,""));
+        });
+    });
+
+    function listAction(){
+
+        if(document.referrer.indexOf('/userList') > -1){
+            history.back();
+        }else{
+            location.href='/userList';
+        }
+
+    }
+
+    function cancelAction(){
+        var msg = "등록";
+        /*[# th:if="${member.id == null}"]*/
+            msg = "등록";
+        /*[/]*/
+        /*[# th:if="${member.id != null}"]*/
+            msg = "수정";
+        /*[/]*/
+        if(confirm(msg+"을 취소하시겠습니까?")){
+            location.href='/userList';
+        }
+    }
+
+    function deleteAction(id){
+        if(confirm("삭제하시겠습니까?")){
+            var obj=[];
+            obj.push(id);
+            var url="/userDelete";
+            $.ajax({
+                type : 'POST'
+                , async : true
+                , beforeSend : function (jqXHR, settings) {
+                }
+                , url : url //for ASP.NET, java
+                , data : 'deleteList='+obj
+                , success : function (changes) {
+                    //debugger;
+
+                    if(changes.success == true){
+                        location.href="/userList";
+                    }
+                }
+                , complete : function (changes) {
+                }
+            });
+        }
+    }
+
+    </script>
+</head>
+
+<div class="page-wrapper" layout:fragment="content">
+    <div class="page-breadcrumb">
+        <div class="row">
+            <div class="col-12 d-flex no-block align-items-center">
+                <h4 class="page-title">관리자 관리</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <form class="form-horizontal" id="is_form" method="post" name="is_form" th:action="${member.id} == null ? @{/createUser} : @{/updateUser}"
+                          th:object="${member}">
+                        <input id="id" name="id" th:value="*{id}" type="hidden">
+                        <input id="samecheck" name="samecheck" value="" type="hidden">
+                        <div class="card-body">
+                            <h4 class="card-title">관리자 <th:block th:if="*{id == null}" th:text="등록"></th:block><th:block th:if="*{id != null}" th:text="수정"></th:block><p style="text-align: right;color:red;font-size:15px">*항목은 필수 입력입니다.</p></h4>
+
+
+                            <div class="form-group row">
+                                <label class="col-md-3"
+                                       for="loginId">관리자 구분</label>
+                                <div class="col-sm-9">
+                                    <th:block th:if="*{auth} == 'ROLE_USER'">일반관리자</th:block>
+                                    <th:block th:if="*{auth} == null">일반관리자</th:block>
+                                    <th:block th:if="*{auth} == 'ROLE_ADMIN'">마스터관리자</th:block>
+                                </div>
+                            </div>
+                            <div class="form-group row" th:classappend="${member.id == null ? 'required' : ''}">
+                                <label class="col-md-3 " th:classappend="${member.id == null ? 'control-label' : ''}"
+                                       for="loginId">아이디</label>
+
+                                    <th:block th:if="${member.id == null}">
+                                        <div class="col-sm-3">
+                                            <input
+                                                    class="form-control"
+                                                    id="loginId"
+                                                    name="loginId"
+                                                    maxlength="14"
+                                                    placeholder="ID를 입력하세요."
+                                                    onkeyup="recheck(this)"
+                                                    oninput="numberMaxLength(this);"
+                                                    th:errorclass="is-invalid"
+                                                    th:field="*{loginId}" type="text"
+                                            />
+                                        </div>
+                                        <div class="col-sm-1.5">
+                                            <button type="button" class="btn btn-info" onclick="sameIdCheck();">아이디중복체크</button>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <middle class="text-muted">4~14자의 영문 소문자, 숫자와 특수기호(_),(-)만 사용 가능합니다.</middle>
+                                        </div>
+                                    </th:block>
+                                    <th:block th:if="${member.id != null}">
+                                        <div class="col-sm-9" th:text="${member.loginId}">
+                                        </div>
+                                    </th:block>
+
+                            </div>
+                            <div class="form-group required row">
+                                <label
+                                        class="col-md-3 control-label"
+                                        for="name"
+                                >이름</label
+                                >
+                                <div class="col-sm-3">
+                                    <input
+                                            class="form-control"
+                                            id="name"
+                                            name="name"
+                                            maxlength="5"
+                                            oninput="numberMaxLength(this);"
+                                            th:field="*{name}"
+                                            type="text"
+                                    />
+                                </div>
+                            </div>
+                            <div class="form-group row" th:classappend="*{id} != null ? '' : 'required'">
+                                <label
+                                        class="col-md-3 " th:classappend="*{id} != null ? '' : 'control-label'"
+                                        for="passwd"
+                                >비밀번호</label
+                                >
+                                <div class="col-sm-3">
+                                    <input
+                                            class="form-control"
+                                            id="passwd"
+                                            name="password"
+                                            maxlength="25"
+                                            oninput="numberMaxLength(this);"
+                                            placeholder="비밀번호를 입력하세요."
+                                            type="password"
+                                    />
+                                </div>
+                                <div class="col-sm-6">
+                                    <middle class="text-muted">8자~25자 이내로, 영문/숫자/특수문자 !@#$%^*+=- 를 조합해서 생성해 주세요</middle>
+                                </div>
+                            </div>
+                            <th:block th:if="*{id == null}">
+                                <div class="form-group required row">
+                                    <label
+                                            class="col-md-3 control-label"
+                                            for="passwd"
+                                    >비밀번호 재입력</label
+                                    >
+                                    <div class="col-sm-3">
+                                        <input
+                                                class="form-control"
+                                                id="passwd1"
+                                                name="password1"
+                                                maxlength="25"
+                                                oninput="numberMaxLength(this);"
+                                                placeholder="비밀번호를 재입력하세요."
+                                                type="password"
+                                        />
+                                    </div>
+                                </div>
+                            </th:block>
+                            <th:block th:if="*{id != null}">
+                                <div class="form-group row">
+                                    <label
+                                            class="col-md-3"
+                                            for="mpasswd"
+                                    >마스터 관리자 비밀번호</label
+                                    >
+                                    <div class="col-sm-3">
+                                        <input
+                                                class="form-control"
+                                                id="mpasswd"
+                                                name="mPassword"
+                                                maxlength="25"
+                                                oninput="numberMaxLength(this);"
+                                                placeholder="마스터 관리자 비밀번호를 입력하세요."
+                                                type="password"
+                                        />
+                                    </div>
+                                </div>
+                            </th:block>
+
+                            <div class="form-group required row">
+                                <label
+                                        class="col-md-3 control-label"
+                                        for="emailId"
+                                >이메일</label
+                                >
+                                <div class="col-md-3">
+                                    <input
+                                            class="form-control"
+                                            id="emailId"
+                                            name="emailId"
+                                            maxlength="25"
+                                            oninput="numberMaxLength(this);"
+                                            th:value="${@commUtils.getUnEscHtml(member.emailId)}"
+                                            type="text"
+                                    />
+                                </div>
+                                @
+                                <div class="col-md-3">
+                                    <input
+                                            class="form-control"
+                                            id="emailDomain"
+                                            name="emailDomain"
+                                            maxlength="50"
+                                            oninput="numberMaxLength(this);"
+                                            th:readonly="${member.emailDomain eq 'naver.com' or member.emailDomain eq 'daum.net' or member.emailDomain eq 'gmail.com' ? 'readonly' : false}"
+                                            th:field="*{emailDomain}"
+                                            type="text"
+                                    />
+                                </div>
+                                <div class="col-md-2">
+                                    <select aria-hidden="true"
+                                            class="select2 form-select shadow-none select2-hidden-accessible"
+                                            data-select2-id="1" id="changedmain2" onchange="changeDomain(this);"
+                                            style="width: 100%; height: 36px" tabindex="-1">
+                                        <option th:selected="*{emailDomain} == '' or *{emailDomain} == null" value="">직접입력</option>
+                                        <option th:selected="*{emailDomain} == 'naver.com'" value="naver.com">
+                                            naver.com
+                                        </option>
+                                        <option th:selected="*{emailDomain} == 'daum.net'" value="daum.net">daum.net
+                                        </option>
+                                        <option th:selected="*{emailDomain} == 'gmail.com'" value="gmail.com">
+                                            gmail.com
+                                        </option>
+                                    </select>
+                                </div>
+
+                            </div>
+                            <div class="form-group required row">
+                                <label
+                                        class="col-md-3 control-label"
+                                        for="pnum"
+                                >휴대폰 번호</label>
+                                <div class="col-sm-3">
+                                    <input
+                                            class="form-control"
+                                            id="pnum"
+                                            name="pnum"
+                                            placeholder="010-1234-1234"
+                                            maxlength="13"
+                                            oninput="numberMaxLength(this);"
+                                            th:field="*{pnum}"
+                                            type="text"
+                                    />
+                                </div>
+                                <div class="col-sm-6">
+                                    <middle class="text-muted">휴대폰 번호만 입력 가능, 숫자 13자리와 –(하이픈) 만 입력 가능 (ex: 010-0000-0000)</middle>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label
+                                        class="col-md-3"
+                                        for="rank">직급</label>
+                                <div class="col-sm-3">
+                                    <input class="form-control" id="rank" name="rank"
+                                           th:field="*{rank}"
+                                           maxlength="8"
+                                           oninput="numberMaxLength(this);"
+                                           type="text"/>
+                                </div>
+                            </div>
+                            <div class="form-group required row">
+                                <label class="col-md-3 control-label">사용여부</label>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" id="useYn1" name="useYn" required=""
+                                               th:checked="useYn == 'Y'"
+                                               th:field="*{useYn}"
+                                               type="radio" value="Y">
+                                        <label class="form-check-label mb-0" for="useYn1">사용</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" id="useYn2" name="useYn" required=""
+                                               th:checked="useYn == 'N'"
+                                               th:field="*{useYn}"
+                                               type="radio" value="N">
+                                        <label class="form-check-label mb-0" for="useYn2">미사용</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-md-3">권한구분</label>
+                                <div class="col-md-6">
+                                    <div class="form-check mr-sm-2">
+                                        <input class="form-check-input" id="mainAuthority" name="mainAuthority"
+                                               th:field="*{mainAuthority}" th:value="Y"
+                                               type="checkbox">
+                                        <label clas="form-check-label mb-0" for="mainAuthority">메인 관리</label>
+                                    </div>
+                                    <div class="form-check mr-sm-2">
+                                        <input class="form-check-input" id="noticeAuthority" name="noticeAuthority"
+                                               th:field="*{noticeAuthority}" th:value="Y"
+                                               type="checkbox">
+                                        <label class="form-check-label mb-0" for="noticeAuthority">공지사항 관리</label>
+                                    </div>
+                                    <div class="form-check mr-sm-2">
+                                        <input class="form-check-input" id="logAuthority" name="logAuthority"
+                                               th:field="*{logAuthority}" th:value="Y"
+                                               type="checkbox">
+                                        <label class="form-check-label mb-0" for="logAuthority">운영 관리</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border-top" style="text-align:center;">
+                            <div class="card-body">
+                                <button class="btn btn-secondary text-white" onclick="listAction();"
+                                        type="button">
+                                    목록
+                                </button>
+                                <button class="btn btn-success text-white" onclick="updateUser();"
+                                        type="button">
+                                    <th:block th:if="*{id == null}" th:text="등록"></th:block>
+                                    <th:block th:if="*{id != null}" th:text="수정"></th:block>
+                                </button>
+                                <th:block th:if="*{id == null}">
+                                    <button class="btn btn-danger text-white" onclick="cancelAction();" type="button">
+                                        취소
+                                    </button>
+                                </th:block>
+                                <th:block th:if="*{id != null}">
+                                    <th:block th:if="*{auth} == 'ROLE_USER'">
+                                        <button class="btn btn-danger text-white" th:onclick="deleteAction([[*{id}]]);" type="button">
+                                            삭제
+                                        </button>
+                                    </th:block>
+                                </th:block>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+</html>

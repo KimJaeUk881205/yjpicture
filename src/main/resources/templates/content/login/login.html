@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko"
+>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
+    <meta content="" name="description">
+    <meta content="" name="author">
+
+    <title>KOLON BIOTECH admin login</title>
+
+    <!-- Custom fonts for this template-->
+    <link
+            href="/assets/images/favicon.ico"
+            rel="icon"
+            sizes="16x16"
+            type="image/x-icon"
+    />
+    <!-- Custom CSS -->
+    <link href="/dist/css/style.min.css" rel="stylesheet"/>
+    <script src="/assets/libs/jquery/dist/jquery.min.js"></script>
+    <script src="/assets/libs/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="/assets/libs/jquery-validation/dist/additional-methods.js"></script>
+    <script src="/js/jquery-common.js"></script>
+
+    <script>
+        /*<![CDATA[*/
+        var isLocked = [[ ${isLocked == null ? false : isLocked} ]];
+        /*]]*/
+        if(isLocked){
+            alert("[[ ${isLockedMsg} ]]");
+        }
+
+        $(function () {
+            $("#loginform").validate({
+                ignore: "",
+                rules: {
+                    loginId: {required:true},
+                    password: {required:true}
+                },
+
+                messages: {
+                    loginId: {required:"아이디를 입력해주세요."},
+                    password: {required:"비밀번호를 입력해주세요."}
+                },
+                errorPlacement: function(error, element) {
+
+                }
+            });
+
+            subutton = function(){
+                // $("#loginId").val($("#loginId").val().replace(/\s+/g, ''));
+                // $("#password").val($("#password").val().replace(/\s+/g, ''));
+                if($("#loginform").valid()){
+
+                    $("#loginform")[0].submit()
+                    return false;
+                }
+            }
+
+            press = function(v,event){
+                v.value = v.value.replace(/\s+/g, '');
+                if(event.keyCode == 13){
+                    //javascript에서는 13이 enter키를 의미함
+                    subutton(); //formname에 사용자가 지정한 form의 name입력
+                }
+            }
+        });
+
+    </script>
+	<style>
+		h1.logo {padding:130px 0 0 0;font-size:70px;color:#e6e6e6;font-weight:800;text-align:center;font-family:sans-serif;}
+        input[type=password]::-ms-reveal {
+            display: none;
+            width: 0;
+            height: 0;
+        }
+	</style>
+
+</head>
+
+<body>
+<div class="main-wrapper">
+    <!-- ============================================================== -->
+    <!-- Preloader - style you can find in spinners.css -->
+    <!-- ============================================================== -->
+    <div class="preloader">
+        <div class="lds-ripple">
+            <div class="lds-pos"></div>
+            <div class="lds-pos"></div>
+        </div>
+    </div>
+    <!-- ============================================================== -->
+    <!-- Preloader - style you can find in spinners.css -->
+    <!-- ============================================================== -->
+    <!-- ============================================================== -->
+    <!-- Login box.scss -->
+    <!-- ============================================================== -->
+	<h1 class="logo"></h1>
+	<div class="text-center pt-3 pb-3"><img alt="logo" src="/assets/images/logo.png"/></div>
+    <div class="auth-wrapper d-flex no-block justify-content-center align-items-center">
+
+        <div class="auth-box border-top border-secondary" style="width:400px;">
+            <div>
+                <div class="text-center pt-3 pb-4">
+                    <!--                    <span class="db"><img alt="logo" src="/assets/images/logo.png"/></span>-->
+                </div>
+                <!-- Form -->
+                <form action="/login" class="form-horizontal" name="loginform" id="loginform" method="post">
+                    <div class="row pb-4">
+                        <div class="col-sm-8">
+                            <div class="input-group mb-3">
+                                <!--div class="input-group-prepend">
+                                  <span class="input-group-text bg-success text-white h-100" id="basic-addon1">
+                                      <i class="mdi mdi-account fs-4"></i>
+                                  </span>
+                                </div-->
+                                <input aria-describedby="basic-addon1" aria-label="loginId"
+                                       class="form-control form-control-lg"
+                                       name="loginId" placeholder="ID"
+                                       onkeyup="javascript:press(this,event);"
+                                       type="text"/>
+                            </div>
+                            <div class="input-group mb-3">
+                                <!--div class="input-group-prepend">
+                                    <span class="input-group-text bg-warning text-white h-100" id="basic-addon2"><i
+                                            class="mdi mdi-lock fs-4"></i></span>
+                                </div-->
+                                <input aria-describedby="basic-addon1" aria-label="Password"
+                                       class="form-control form-control-lg"
+                                       name="password" placeholder="Password"
+                                       onkeyup="javascript:press(this,event);"
+                                       type="password"/>
+                            </div>
+                        </div>
+						<div class="col-sm-4 form-group">
+                            <button class="btn btn-primary block full-width full-height m-b" type="button" onclick="subutton();">Login</button>
+                        </div>
+                    </div>
+                    <div class="row border-top border-secondary">
+                        ※ 패스워드 5회 실패 시 비밀번호가 잠기오니 관리자에게 문의하십시오.
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+	<div class="m-t copy">Copyright 2021. ©KOLON BIOTECH Inc. All rights reserved.</div>
+    <!-- ============================================================== -->
+    <!-- Login box.scss -->
+    <!-- ============================================================== -->
+    <!-- ============================================================== -->
+    <!-- Page wrapper scss in scafholding.scss -->
+    <!-- ============================================================== -->
+    <!-- ============================================================== -->
+    <!-- Page wrapper scss in scafholding.scss -->
+    <!-- ============================================================== -->
+    <!-- ============================================================== -->
+    <!-- Right Sidebar -->
+    <!-- ============================================================== -->
+    <!-- ============================================================== -->
+    <!-- Right Sidebar -->
+    <!-- ============================================================== -->
+</div>
+<!-- ============================================================== -->
+<!-- All Required js -->
+<!-- ============================================================== -->
+
+<!-- Bootstrap tether Core JavaScript -->
+<script src="/assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<!-- ============================================================== -->
+<!-- This page plugin js -->
+<!-- ============================================================== -->
+<script>
+      $(".preloader").fadeOut();
+      // ==============================================================
+      // Login and Recover Password
+      // ==============================================================
+
+      $("#to-login").click(function () {
+        $("#recoverform").hide();
+        $("#loginform").fadeIn();
+      });
+
+
+</script>
+</body>
+
+</html>
